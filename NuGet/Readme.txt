@@ -21,14 +21,14 @@ Deployment:
 What's New:
   See https://github.com/cefsharp/CefSharp/wiki/ChangeLog
   IMPORTANT NOTE - Visual C++ 2015 is now required
-  IMPORTANT NOTE - .NET Framework 4.5.2 is now required.  
   IMPORTANT NOTE - Chromium has removed support for Windows XP/2003 and Windows Vista/Server 2008 (non R2).
   
   The Microsoft .NET Framework 4.5.2 Developer Pack for Visual Studio 2012 and Visual Studio 2013 is available here: 
   https://www.microsoft.com/en-gb/download/details.aspx?id=42637
 
 Basic Troubleshooting:
-  - Minimum of .Net 4.5.2
+  - Minimum of .NET Framework 4.0* (4.5.2 is required for the example applications)
+    *See the README.NET40SUPPORT.md file, in the root folder, for a description of how this works and troubleshooting.
   - Make sure `VC++ 2015 Redist` is installed (either `x86` or `x64` depending on your application)
   - Please ensure your binaries directory contains these required dependencies:
     * libcef.dll (CEF code)
