@@ -43,6 +43,11 @@ Basic Troubleshooting:
   - Additional optional CEF files are described at: https://github.com/cefsharp/cef-binary/blob/master/README.txt#L82
     NOTE: CefSharp does not currently support CEF sandboxing.
   - By default `CEF` has it's own log file, `Debug.log` which is located in your executing folder. e.g. `bin`
+  - Users of the .NET 4.0 compatible assemblies can prevent cascading the requirement of the Microsoft BCL packages for dependent assemblies, by adding the following to their project files:
+
+	<PropertyGroup>
+	  <SkipValidatePackageReferences>true</SkipValidatePackageReferences>
+	</PropertyGroup>
 
 For further help please read the following content:
   - General Usage Guide https://github.com/cefsharp/CefSharp/wiki/General-Usage

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
-    <id>CefSharp.Wpf</id>
+    <id>CefSharp.Net40.Wpf</id>
     <version>$version$</version>
     <authors>The CefSharp Authors</authors>
     <owners>The CefSharp Authors</owners>
@@ -12,8 +12,11 @@
     <tags>wpf chrome browser</tags>
     <copyright>Copyright © 2010-2018 The CefSharp Authors</copyright>
     <dependencies>
-      <group targetFramework=".NETFramework4.5.2">
-        <dependency id="CefSharp.Common" version="[$version$]" />
+      <group targetFramework=".NETFramework4.0">
+	    <dependency id="CefSharp.Common" version="[$version$]" />
+		<dependency id="Microsoft.Bcl" version="1.1.10" />
+        <dependency id="Microsoft.Bcl.Async" version="1.0.168" />
+        <dependency id="Microsoft.Bcl.Build" version="1.0.21" />
       </group>
     </dependencies>
     <releaseNotes>
@@ -26,16 +29,18 @@
   <files>
     <!-- Cannot put these inside lib\net40 etc, since there are both x86 and x64 versions which we must distinguish between. We
          solve this using a .props file instead. -->
-    <file src="..\CefSharp.Wpf\bin\x86\Release\CefSharp.Wpf.dll" target="CefSharp\x86" />
-    <file src="..\CefSharp.Wpf\bin\x86\Release\CefSharp.Wpf.xml" target="CefSharp\x86" />
-    <file src="..\CefSharp.Wpf\bin\x86\Release\CefSharp.Wpf.pdb" target="CefSharp\x86" />
+	<file src="..\CefSharp.Wpf\bin\x86\Release-Net40\CefSharp.Wpf.dll" target="CefSharp\x86" />
+	<file src="..\CefSharp.Wpf\bin\x86\Release-Net40\CefSharp.Wpf.dll.config" target="CefSharp\x86" />
+    <file src="..\CefSharp.Wpf\bin\x86\Release-Net40\CefSharp.Wpf.xml" target="CefSharp\x86" />
+    <file src="..\CefSharp.Wpf\bin\x86\Release-Net40\CefSharp.Wpf.pdb" target="CefSharp\x86" />
 
-    <file src="..\CefSharp.Wpf\bin\x64\Release\CefSharp.Wpf.xml" target="CefSharp\x64" />
-    <file src="..\CefSharp.Wpf\bin\x64\Release\CefSharp.Wpf.dll" target="CefSharp\x64" />
-    <file src="..\CefSharp.Wpf\bin\x64\Release\CefSharp.Wpf.pdb" target="CefSharp\x64" />
+	<file src="..\CefSharp.Wpf\bin\x64\Release-Net40\CefSharp.Wpf.xml" target="CefSharp\x64" />
+    <file src="..\CefSharp.Wpf\bin\x64\Release-Net40\CefSharp.Wpf.dll" target="CefSharp\x64" />
+	<file src="..\CefSharp.Wpf\bin\x64\Release-Net40\CefSharp.Wpf.dll.config" target="CefSharp\x64" />
+    <file src="..\CefSharp.Wpf\bin\x64\Release-Net40\CefSharp.Wpf.pdb" target="CefSharp\x64" />
 
-    <file src="CefSharp.Wpf.props" target="build" />
-    <file src="CefSharp.Wpf.targets" target="build" />
+    <file src="CefSharp.Net40.Wpf.props" target="build" />
+    <file src="CefSharp.Net40.Wpf.targets" target="build" />
 
     <file src="Readme.txt" target="" />
 

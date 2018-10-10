@@ -120,7 +120,7 @@ function Msvs
         [string] $Toolchain, 
 
         [Parameter(Position = 1, ValueFromPipeline = $true)]
-        [ValidateSet('Debug', 'Release')]
+        [ValidateSet('Debug', 'Debug-Net40', 'Release', 'Release-Net40')]
         [string] $Configuration, 
 
         [Parameter(Position = 2, ValueFromPipeline = $true)]
@@ -255,8 +255,8 @@ function VSX
 
     Write-Diagnostic "Starting to build targeting toolchain $Toolchain"
 
-    Msvs "$Toolchain" 'Release' 'x86'
-    Msvs "$Toolchain" 'Release' 'x64'
+	Msvs "$Toolchain" 'Release-Net40' 'x86'
+	Msvs "$Toolchain" 'Release-Net40' 'x64'
 
     Write-Diagnostic "Finished build targeting toolchain $Toolchain"
 }
@@ -291,10 +291,10 @@ function Nupkg
     Write-Diagnostic "Building nuget package"
 
     # Build packages
-    . $nuget pack nuget\CefSharp.Common.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget -Properties "RedistVersion=$RedistVersion"
-    . $nuget pack nuget\CefSharp.Wpf.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget
-    . $nuget pack nuget\CefSharp.OffScreen.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget
-    . $nuget pack nuget\CefSharp.WinForms.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget
+    . $nuget pack nuget\CefSharp.Net40.Common.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget -Properties "RedistVersion=$RedistVersion"
+    . $nuget pack nuget\CefSharp.Net40.Wpf.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget
+    . $nuget pack nuget\CefSharp.Net40.OffScreen.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget
+    . $nuget pack nuget\CefSharp.Net40.WinForms.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget
 
     # Invoke `AfterBuild` script if available (ie. upload packages to myget)
     if(-not (Test-Path $WorkingDir\AfterBuild.ps1)) {
@@ -334,8 +334,8 @@ function UpdateSymbolsWithGitLink()
     Write-Diagnostic "GitLink working dir : $WorkingDir"
     
     # Run GitLink in the workingDir
-    . $gitlink $WorkingDir -f CefSharp3.sln -u https://github.com/CefSharp/CefSharp -c Release -p x64 -ignore CefSharp.Example,CefSharp.Wpf.Example,CefSharp.OffScreen.Example,CefSharp.WinForms.Example
-    . $gitlink $WorkingDir -f CefSharp3.sln -u https://github.com/CefSharp/CefSharp -c Release -p x86 -ignore CefSharp.Example,CefSharp.Wpf.Example,CefSharp.OffScreen.Example,CefSharp.WinForms.Example
+    . $gitlink $WorkingDir -f CefSharp3.sln -u https://github.com/CefSharp/CefSharp -b net40-master -c Release -p x64 -ignore CefSharp.Example,CefSharp.Wpf.Example,CefSharp.OffScreen.Example,CefSharp.WinForms.Example
+    . $gitlink $WorkingDir -f CefSharp3.sln -u https://github.com/CefSharp/CefSharp -b net40-master -c Release -p x86 -ignore CefSharp.Example,CefSharp.Wpf.Example,CefSharp.OffScreen.Example,CefSharp.WinForms.Example
 }
 
 function WriteAssemblyVersion
