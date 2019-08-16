@@ -120,7 +120,10 @@ namespace CefSharp.Wpf.Example.ViewModels
                     {
                         Task.Delay(10000).ContinueWith(t =>
                         {
-                            WebBrowser.Reload();
+                            if (WebBrowser != null)
+                            {
+                                WebBrowser.Reload();
+                            }
                         });
                     }
                 };
@@ -175,7 +178,6 @@ namespace CefSharp.Wpf.Example.ViewModels
                     {
                         WebBrowser.ConsoleMessage += OnWebBrowserConsoleMessage;
                         WebBrowser.StatusMessage += OnWebBrowserStatusMessage;
-                        WebBrowser.LoadError += OnWebBrowserLoadError;
 
                         // TODO: This is a bit of a hack. It would be nicer/cleaner to give the webBrowser focus in the Go()
                         // TODO: method, but it seems like "something" gets messed up (= doesn't work correctly) if we give it
@@ -203,21 +205,6 @@ namespace CefSharp.Wpf.Example.ViewModels
         private void OnWebBrowserStatusMessage(object sender, StatusMessageEventArgs e)
         {
             StatusMessage = e.Value;
-        }
-
-        private void OnWebBrowserLoadError(object sender, LoadErrorEventArgs args)
-        {
-            // Don't display an error for downloaded files where the user aborted the download.
-            if (args.ErrorCode == CefErrorCode.Aborted)
-            {
-                return;
-            }
-
-            var errorMessage = "<html><body><h2>Failed to load URL " + args.FailedUrl +
-                  " with error " + args.ErrorText + " (" + args.ErrorCode +
-                  ").</h2></body></html>";
-
-            webBrowser.LoadHtml(errorMessage, args.FailedUrl);
         }
 
         private void Go()
