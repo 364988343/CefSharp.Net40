@@ -4,12 +4,6 @@
     <Error Text="$(MSBuildThisFileName) contains unmanaged resoures, set your project and solution platform to x86 or x64. Alternatively for AnyCPU Support see https://github.com/cefsharp/CefSharp/issues/1714" />
   </Target>
 
-  <ItemGroup>
-    <CefSharpCommonBinaries32 Include="$(MSBuildThisFileDirectory)..\CefSharp\x86\*.*" />
-    <CefSharpCommonBinaries64 Include="$(MSBuildThisFileDirectory)..\CefSharp\x64\*.*" />
-    <CefSharpCommonBinariesAnyCPU Include="$(MSBuildThisFileDirectory)..\CefSharp\**\*.*" />
-  </ItemGroup>
-
   <PropertyGroup>
     <CefSharpTargetDir Condition=" '$(CefSharpTargetDir)' == '' "></CefSharpTargetDir>
   </PropertyGroup>
