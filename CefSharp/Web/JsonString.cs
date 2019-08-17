@@ -31,6 +31,14 @@ namespace CefSharp.Web
             Json = json;
         }
 
+#if NET40
+        /// <summary>
+        /// Create a JsonString from the specfied object using the build in <see cref="DataContractJsonSerializer"/>
+        /// </summary>
+        /// <param name="obj">object to seriaize</param>
+        /// <returns>If <paramref name="obj"/> is null then return nulls otherwise a JsonString.</returns>
+        public static JsonString FromObject(object obj)
+#else
         /// <summary>
         /// Create a JsonString from the specfied object using the build in <see cref="DataContractJsonSerializer"/>
         /// </summary>
@@ -38,6 +46,7 @@ namespace CefSharp.Web
         /// <param name="settings">optional settings</param>
         /// <returns>If <paramref name="obj"/> is null then return nulls otherwise a JsonString.</returns>
         public static JsonString FromObject(object obj, DataContractJsonSerializerSettings settings = null)
+#endif
         {
             if (obj == null)
             {
@@ -46,7 +55,11 @@ namespace CefSharp.Web
 
             using (var ms = new MemoryStream())
             {
+#if NET40
+                var dataContractJsonSerializer = new DataContractJsonSerializer(obj.GetType());
+#else
                 var dataContractJsonSerializer = new DataContractJsonSerializer(obj.GetType(), settings);
+#endif
                 dataContractJsonSerializer.WriteObject(ms, obj);
 
                 var jsonString = Encoding.UTF8.GetString(ms.ToArray());
