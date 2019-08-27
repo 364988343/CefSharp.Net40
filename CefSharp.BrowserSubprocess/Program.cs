@@ -21,7 +21,9 @@ namespace CefSharp.BrowserSubprocess
         {
             Debug.WriteLine("BrowserSubprocess starting up with command line: " + String.Join("\n", args));
 
-            SubProcess.EnableHighDPISupport();
+            // High DPI is disabled in this branch, to enable add the command line to CefSettings: "--high-dpi-support=1"
+            // This allows consumers of this executable to choose whether or not they use high DPI mode or not.
+            //SubProcess.EnableHighDPISupport();
 
             int result;
             var type = args.GetArgumentValue(CefSharpArguments.SubProcessTypeArgument);
