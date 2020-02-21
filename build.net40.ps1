@@ -1,11 +1,11 @@
-param(
-    [ValidateSet("vs2015", "vs2017", "nupkg-only", "gitlink")]
+﻿param(
+    [ValidateSet("vs2015", "vs2017", "vs2019", "nupkg-only", "gitlink")]
     [Parameter(Position = 0)] 
     [string] $Target = "vs2015",
     [Parameter(Position = 1)]
-    [string] $Version = "76.1.90",
+    [string] $Version = "79.1.360",
     [Parameter(Position = 2)]
-    [string] $AssemblyVersion = "76.1.90"
+    [string] $AssemblyVersion = "79.1.360"
 )
 
 $WorkingDir = split-path -parent $MyInvocation.MyCommand.Definition
@@ -115,7 +115,7 @@ function TernaryReturn
 function Msvs 
 {
     param(
-        [ValidateSet('v140', 'v141')]
+        [ValidateSet('v140', 'v141', 'v142')]
         [Parameter(Position = 0, ValueFromPipeline = $true)]
         [string] $Toolchain, 
 
@@ -144,11 +144,14 @@ function Msvs
             $VisualStudioVersion = '14.0'
             $VXXCommonTools = Join-Path $env:VS140COMNTOOLS '..\..\vc'
         }
-        'v141' {
+        {($_ -eq 'v141') -or ($_ -eq 'v142')} {
+            $VS_VER = 15;
+            $VS_OFFICIAL_VER = 2017;
+            if ($_ -eq 'v142'){$VS_VER=16;$VS_OFFICIAL_VER=2019;}
             $programFilesDir = (${env:ProgramFiles(x86)}, ${env:ProgramFiles} -ne $null)[0]
 
             $vswherePath = Join-Path $programFilesDir 'Microsoft Visual Studio\Installer\vswhere.exe'
-            #Check if we already have vswhere which is included in newer versions of VS2017
+            #Check if we already have vswhere which is included in newer versions of VS2017/VS2019
             if(-not (Test-Path $vswherePath))
             {
                 Write-Diagnostic "Downloading VSWhere as no install found at $vswherePath"
@@ -166,17 +169,18 @@ function Msvs
             
             Write-Diagnostic "VSWhere path $vswherePath"
             
-            $VS2017InstallPath = & $vswherePath -version 15 -property installationPath
+            $versionSearchStr = "[$VS_VER.0," + ($VS_VER+1) + ".0)"
+            $VS2017InstallPath = & $vswherePath -version $versionSearchStr -property installationPath
             
-            Write-Diagnostic "VS2017InstallPath: $VS2017InstallPath"
+            Write-Diagnostic "$($VS_OFFICIAL_VER)InstallPath: $VS2017InstallPath"
                 
             if(-not (Test-Path $VS2017InstallPath))
             {
-                Die "Visual Studio 2017 is not installed on your development machine, unable to continue."
+                Die "Visual Studio $VS_OFFICIAL_VER is not installed on your development machine, unable to continue."
             }
                 
             $MSBuildExe = "msbuild.exe"
-            $VisualStudioVersion = '15.0'
+            $VisualStudioVersion = "$VS_VER.0"
             $VXXCommonTools = Join-Path $VS2017InstallPath VC\Auxiliary\Build
         }
     }
@@ -242,7 +246,7 @@ function Msvs
 function VSX 
 {
     param(
-        [ValidateSet('v140', 'v141')]
+        [ValidateSet('v140', 'v141', 'v142')]
         [Parameter(Position = 0, ValueFromPipeline = $true)]
         [string] $Toolchain
     )
@@ -284,11 +288,22 @@ function Nupkg
 
     Write-Diagnostic "Building nuget package"
 
-    # Build packages
+    # Build old packages
     . $nuget pack nuget\CefSharp.Net40.Common.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget -Properties "RedistVersion=$RedistVersion"
     . $nuget pack nuget\CefSharp.Net40.Wpf.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget
     . $nuget pack nuget\CefSharp.Net40.OffScreen.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget
     . $nuget pack nuget\CefSharp.Net40.WinForms.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget
+	
+	# Build newer style packages
+	# Not currently supported in this branch :(
+	#. $nuget pack nuget\PackageReference\CefSharp.Net40.Common.win.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget\PackageReference -Properties "RedistVersion=$RedistVersion;Platform=x86;PlatformNative=Win32"
+	#. $nuget pack nuget\PackageReference\CefSharp.Net40.Common.win.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget\PackageReference -Properties "RedistVersion=$RedistVersion;Platform=x64;PlatformNative=x64"
+    #. $nuget pack nuget\PackageReference\CefSharp.Net40.OffScreen.win.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget\PackageReference -Properties "Platform=x86"
+	#. $nuget pack nuget\PackageReference\CefSharp.Net40.OffScreen.win.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget\PackageReference -Properties "Platform=x64"
+	#. $nuget pack nuget\PackageReference\CefSharp.Net40.Wpf.win.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget\PackageReference -Properties "Platform=x86"
+	#. $nuget pack nuget\PackageReference\CefSharp.Net40.Wpf.win.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget\PackageReference -Properties "Platform=x64"
+	#. $nuget pack nuget\PackageReference\CefSharp.Net40.WinForms.win.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget\PackageReference -Properties "Platform=x86"
+	#. $nuget pack nuget\PackageReference\CefSharp.Net40.WinForms.win.nuspec -NoPackageAnalysis -Version $Version -OutputDirectory nuget\PackageReference -Properties "Platform=x64"
 
     # Invoke `AfterBuild` script if available (ie. upload packages to myget)
     if(-not (Test-Path $WorkingDir\AfterBuild.ps1)) {
@@ -331,8 +346,8 @@ function UpdateSymbolsWithGitLink()
     Write-Diagnostic "GitLink working dir : $WorkingDir"
     
     # Run GitLink in the workingDir
-    . $gitlink $WorkingDir -f CefSharp3.sln -u https://github.com/CefSharp/CefSharp -b net40-master -c Release -p x64 -ignore CefSharp.Example,CefSharp.Wpf.Example,CefSharp.OffScreen.Example,CefSharp.WinForms.Example
-    . $gitlink $WorkingDir -f CefSharp3.sln -u https://github.com/CefSharp/CefSharp -b net40-master -c Release -p x86 -ignore CefSharp.Example,CefSharp.Wpf.Example,CefSharp.OffScreen.Example,CefSharp.WinForms.Example
+    . $gitlink $WorkingDir -f CefSharp3.sln -u https://github.com/CefSharp/CefSharp -b net40-master -c Release -p x64 -ignore CefSharp.Example`,CefSharp.Wpf.Example`,CefSharp.OffScreen.Example`,CefSharp.WinForms.Example
+    . $gitlink $WorkingDir -f CefSharp3.sln -u https://github.com/CefSharp/CefSharp -b net40-master -c Release -p x86 -ignore CefSharp.Example`,CefSharp.Wpf.Example`,CefSharp.OffScreen.Example`,CefSharp.WinForms.Example
 }
 
 function WriteAssemblyVersion
@@ -376,8 +391,10 @@ function WriteVersionToResourceFile($resourceFile)
     
     $ResourceData = Get-Content -Encoding UTF8 $Filename
     $CurrentYear = Get-Date -Format yyyy
+	#Assembly version with comma instead of dot
+	$CppAssemblyVersion = $AssemblyVersion -replace '\.', ','
     
-    $NewString = $ResourceData -replace $Regex1, "VERSION $AssemblyVersion"
+    $NewString = $ResourceData -replace $Regex1, "VERSION $CppAssemblyVersion"
     $NewString = $NewString -replace $Regex2, "Version"", ""$AssemblyVersion"""
     $NewString = $NewString -replace $Regex3, "Copyright © $CurrentYear The CefSharp Authors"
     
@@ -447,6 +464,11 @@ switch -Exact ($Target)
     "vs2017"
     {
         VSX v141
+        Nupkg
+    }
+    "vs2019"
+    {
+        VSX v142
         Nupkg
     }
 }
