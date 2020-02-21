@@ -39,7 +39,7 @@ namespace CefSharp.Internals
                 Debug.WriteLine(e);
             }
 
-            await Task.Delay(1000); //wait a bit before exiting
+            await TaskHelpers.Delay(1000); //wait a bit before exiting
 
             Debug.WriteLine("BrowserSubprocess shutting down forcibly.");
 
