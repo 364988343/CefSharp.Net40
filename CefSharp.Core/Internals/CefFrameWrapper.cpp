@@ -5,13 +5,15 @@
 #include "Stdafx.h"
 #include <msclr/lock.h>
 
+#include "UrlRequest.h"
+#include "Request.h"
 #include "Internals\CefSharpBrowserWrapper.h"
-#include "Internals\CefRequestWrapper.h"
 #include "Internals\CefFrameWrapper.h"
 #include "Internals\StringVisitor.h"
 #include "Internals\ClientAdapter.h"
 #include "Internals\Serialization\Primitives.h"
 #include "Internals\Messaging\Messages.h"
+#include "Internals\CefURLRequestClientAdapter.h" 
 
 using namespace CefSharp::Internals::Messaging;
 using namespace CefSharp::Internals::Serialization;
@@ -191,7 +193,7 @@ void CefFrameWrapper::LoadRequest(IRequest^ request)
     ThrowIfDisposed();
     ThrowIfFrameInvalid();
 
-    auto requestWrapper = (CefRequestWrapper^)request;
+    auto requestWrapper = (Request^)request;
     _frame->LoadRequest(requestWrapper);
 }
 
@@ -205,20 +207,6 @@ void CefFrameWrapper::LoadUrl(String^ url)
     ThrowIfFrameInvalid();
 
     _frame->LoadURL(StringUtils::ToNative(url));
-}
-
-///
-// Load the contents of |html| with the specified dummy |url|. |url|
-// should have a standard scheme (for example, http scheme) or behaviors like
-// link clicks and web security restrictions may not behave as expected.
-///
-/*--cef()--*/
-void CefFrameWrapper::LoadStringForUrl(String^ html, String^ url)
-{
-    ThrowIfDisposed();
-    ThrowIfFrameInvalid();
-
-    _frame->LoadString(StringUtils::ToNative(html), StringUtils::ToNative(url));
 }
 
 ///
@@ -404,7 +392,28 @@ IRequest^ CefFrameWrapper::CreateRequest(bool initializePostData)
         request->SetPostData(CefPostData::Create());
     }
 
-    return gcnew CefRequestWrapper(request);
+    return gcnew Request(request);
+}
+
+IUrlRequest^ CefFrameWrapper::CreateUrlRequest(IRequest^ request, IUrlRequestClient^ client)
+{
+    ThrowIfDisposed();
+
+    if (request == nullptr)
+    {
+        throw gcnew ArgumentNullException("request");
+    }
+
+    if (client == nullptr)
+    {
+        throw gcnew ArgumentNullException("client");
+    }
+
+    auto urlRequest = _frame->CreateURLRequest(
+        (Request^)request,
+        new CefUrlRequestClientAdapter(client));
+
+    return gcnew UrlRequest(urlRequest);
 }
 
 void CefFrameWrapper::ThrowIfFrameInvalid()

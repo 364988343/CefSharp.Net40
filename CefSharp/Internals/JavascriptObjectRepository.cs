@@ -3,6 +3,7 @@
 // Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -44,7 +45,7 @@ namespace CefSharp.Internals
         /// this is done to speed up finding the object in O(1) time
         /// instead of traversing the JavaScriptRootObject tree.
         /// </summary>
-        private readonly Dictionary<long, JavascriptObject> objects = new Dictionary<long, JavascriptObject>();
+        private readonly ConcurrentDictionary<long, JavascriptObject> objects = new ConcurrentDictionary<long, JavascriptObject>();
 
         /// <summary>
         /// Has the browser this repository is associated with been initilized (set in OnAfterCreated)
@@ -195,7 +196,8 @@ namespace CefSharp.Internals
             {
                 if (string.Equals(kvp.Value.Name, name, StringComparison.OrdinalIgnoreCase))
                 {
-                    objects.Remove(kvp.Key);
+                    JavascriptObject obj;
+                    objects.TryRemove(kvp.Key, out obj);
 
                     return true;
                 }
@@ -255,22 +257,7 @@ namespace CefSharp.Internals
                     parameters = paramList.ToArray();
                 }
 
-                //Check for parameter count missmatch between the parameters on the javascript function and the
-                //number of parameters on the bound object method. (This is relevant for methods that have default values)
-                //NOTE it's possible to have default params and a paramArray, so check missing params last
-                var missingParams = method.ParameterCount - parameters.Length;
-
-                if (missingParams > 0)
-                {
-                    var paramList = new List<object>(parameters);
-
-                    for (var i = 0; i < missingParams; i++)
-                    {
-                        paramList.Add(Type.Missing);
-                    }
-
-                    parameters = paramList.ToArray();
-                }
+                int missingParams = 0;
 
                 try
                 {
@@ -278,22 +265,29 @@ namespace CefSharp.Internals
                     {
                         for (var i = 0; i < parameters.Length; i++)
                         {
-                            if (parameters[i] != null)
-                            {
-                                var paramExpectedType = method.Parameters[i].Type;
-                                var paramType = parameters[i].GetType();
-                                if (typeof(IDictionary<string, object>).IsAssignableFrom(paramType))
-                                {
-                                    var dictionary = (IDictionary<string, object>)parameters[i];
-                                    parameters[i] = obj.Binder.Bind(dictionary, paramExpectedType);
-                                }
-                                else if (typeof(IList<object>).IsAssignableFrom(paramType))
-                                {
-                                    var list = (IList<object>)parameters[i];
-                                    parameters[i] = obj.Binder.Bind(list, paramExpectedType);
-                                }
-                            }
+                            var paramExpectedType = method.Parameters[i].Type;
+
+                            //Previously only IDictionary<string, object> and IList<object> called Binder.Bind
+                            //Now every param is bound to allow for type conversion
+                            parameters[i] = obj.Binder.Bind(parameters[i], paramExpectedType);
                         }
+                    }
+
+                    //Check for parameter count missmatch between the parameters on the javascript function and the
+                    //number of parameters on the bound object method. (This is relevant for methods that have default values)
+                    //NOTE it's possible to have default params and a paramArray, so check missing params last
+                    missingParams = method.ParameterCount - parameters.Length;
+
+                    if (missingParams > 0)
+                    {
+                        var paramList = new List<object>(parameters);
+
+                        for (var i = 0; i < missingParams; i++)
+                        {
+                            paramList.Add(Type.Missing);
+                        }
+
+                        parameters = paramList.ToArray();
                     }
 
                     if (obj.MethodInterceptor == null)
@@ -302,7 +296,7 @@ namespace CefSharp.Internals
                     }
                     else
                     {
-                        result = obj.MethodInterceptor.Intercept(() => method.Function(obj.Value, parameters), method.ManagedName);
+                        result = obj.MethodInterceptor.Intercept((p) => method.Function(obj.Value, p), parameters, method.ManagedName);
                     }
                 }
                 catch (Exception e)

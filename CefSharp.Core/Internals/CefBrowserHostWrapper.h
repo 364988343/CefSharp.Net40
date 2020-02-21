@@ -46,9 +46,11 @@ namespace CefSharp
             virtual void Print();
             virtual void PrintToPdf(String^ path, PdfPrintSettings^ settings, IPrintToPdfCallback^ callback);
             virtual void SetZoomLevel(double zoomLevel);
+            virtual double GetZoomLevel();
             virtual Task<double>^ GetZoomLevelAsync();
             virtual IntPtr GetWindowHandle();
             virtual void CloseBrowser(bool forceClose);
+            virtual bool TryCloseBrowser();
 
             virtual void DragTargetDragEnter(IDragData^ dragData, MouseEvent mouseEvent, DragOperationsMask allowedOperations);
             virtual void DragTargetDragOver(MouseEvent mouseEvent, DragOperationsMask allowedOperations);

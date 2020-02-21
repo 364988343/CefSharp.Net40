@@ -73,8 +73,10 @@ If you're new to `CefSharp` and are downloading the source to check it out, plea
 
 | Branch                                                               | CEF Version | VC++ Version | .Net Version | Status |
 |----------------------------------------------------------------------|------|------|-------|-----------------|
-| [master](https://github.com/cefsharp/CefSharp/)                      | 3809 | 2015 | 4.5.2 | Development     |
-| [cefsharp/75](https://github.com/cefsharp/CefSharp/tree/cefsharp/75) | 3770 | 2015 | 4.5.2 | **Release**     |
+| [master](https://github.com/cefsharp/CefSharp/)                      | 3945 | 2015 | 4.5.2 | Development     |
+| [cefsharp/79](https://github.com/cefsharp/CefSharp/tree/cefsharp/79) | 3945 | 2015 | 4.5.2 | **Release**     |
+| [cefsharp/77](https://github.com/cefsharp/CefSharp/tree/cefsharp/77) | 3865 | 2015 | 4.5.2 | Unsupported     |
+| [cefsharp/75](https://github.com/cefsharp/CefSharp/tree/cefsharp/75) | 3770 | 2015 | 4.5.2 | Unsupported     |
 | [cefsharp/73](https://github.com/cefsharp/CefSharp/tree/cefsharp/73) | 3683 | 2015 | 4.5.2 | Unsupported     |
 | [cefsharp/71](https://github.com/cefsharp/CefSharp/tree/cefsharp/71) | 3578 | 2015 | 4.5.2 | Unsupported     |
 | [cefsharp/69](https://github.com/cefsharp/CefSharp/tree/cefsharp/69) | 3497 | 2015 | 4.5.2 | Unsupported     |
@@ -99,9 +101,7 @@ If you're new to `CefSharp` and are downloading the source to check it out, plea
 
 To continue developing/supporting the project I (@amaitland) am asking for financial contributions. Donations of any size are greatly appreciated!
 
-`75.0.0` Release: [![Bountysource](https://api.bountysource.com/badge/issue?issue_id=76601097)](https://www.bountysource.com/issues/76601097-funding-request-release-75-0-0?utm_source=76601097&utm_medium=shield&utm_campaign=ISSUE_BADGE)
-
-Recurring contributions can be made through [BountySource Salt](https://salt.bountysource.com/teams/cefsharp) or one time contributions through [PayPal](https://paypal.me/AlexMaitland)
+Recurring contributions can be made through [GitHub Sponsors](https://github.com/sponsors/amaitland) it only takes a GitHub account and a credit card.  Currently GitHub is **doubling(!)** all pledges so is very much the preferred method of donation.  I can also take contributions through [PayPal](https://paypal.me/AlexMaitland).
 
 Now that I (@amaitland) am a stay at home dad your contributions are the only reason I'm allowed to continue working on the project. Without continued funding the time I currently spend on the project will have to be put into finding other paid work.
 
@@ -115,7 +115,5 @@ Now that I (@amaitland) am a stay at home dad your contributions are the only re
 - [CefSharp API Doc](http://cefsharp.github.io/api/)
 
 ## Projects using CefSharp
-
-- [HtmlView](https://github.com/MISoftware/HtmlView) : Visual Studio extension bringing CefSharp for showing HTML pages inside VS.
-- [Chromely](https://github.com/mattkol/Chromely) : Build .NET/.NET Core HTML5 desktop apps using cross-platform native GUI API.
+- [HtmlView](https://github.com/ramon-mendes/HtmlView) : Visual Studio extension bringing CefSharp for showing HTML pages inside VS.
 - [SharpBrowser](https://github.com/sharpbrowser/SharpBrowser) : The fastest web browser for C# with tabbed browsing and HTML5/CSS3.

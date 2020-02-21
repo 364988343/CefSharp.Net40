@@ -93,6 +93,7 @@
     <Compile Include="Callback\IRunFileDialogCallback.cs" />
     <Compile Include="Callback\ISelectClientCertificateCallback.cs" />
     <Compile Include="Callback\ISetCookieCallback.cs" />
+    <Compile Include="Callback\NoOpCompletionCallback.cs" />
     <Compile Include="Callback\TaskDeleteCookiesCallback.cs" />
     <Compile Include="Callback\TaskSetCookieCallback.cs" />
     <Compile Include="Callback\TaskRegisterCdmCallback.cs" />
@@ -102,10 +103,18 @@
     <Compile Include="CdmRegistration.cs" />
     <Compile Include="DefaultApp.cs" />
     <Compile Include="Enums\SchemeOptions.cs" />
+    <Compile Include="Internals\BrowserRefCounter.cs" />
+    <Compile Include="Internals\CommandLineArgDictionary.cs" />
+    <Compile Include="Internals\CookieManagerDecorator.cs" />
+    <Compile Include="Internals\ParentProcessMonitor.cs" />
+    <Compile Include="Internals\HeaderNameValueCollection.cs" />
+    <Compile Include="Internals\TaskScheduler\LimitedConcurrencyLevelTaskScheduler.cs" />
+    <Compile Include="IUrlRequest.cs" />
+    <Compile Include="IUrlRequestClient.cs" />
+    <Compile Include="Lagacy\ResourceHandler.cs" />
     <Compile Include="ResourceRequestHandlerFactory.cs" />
     <Compile Include="ResourceRequestHandlerFactoryItem.cs" />
     <Compile Include="Enums\AlphaType.cs" />
-    <Compile Include="Enums\ChannelLayout.cs" />
     <Compile Include="Enums\PointerType.cs" />
     <Compile Include="Enums\TextInputMode.cs" />
     <Compile Include="Enums\TouchEventType.cs" />
@@ -125,7 +134,6 @@
     <Compile Include="Handler\ICookieAccessFilter.cs" />
     <Compile Include="Handler\IResourceRequestHandler.cs" />
     <Compile Include="IApp.cs" />
-    <Compile Include="Handler\IAudioHandler.cs" />
     <Compile Include="IExtension.cs" />
     <Compile Include="Internals\IMethodRunnerQueue.cs" />
     <Compile Include="Internals\ConcurrentMethodRunnerQueue.cs" />
@@ -142,6 +150,7 @@
     <Compile Include="RenderProcess\IV8Context.cs" />
     <Compile Include="RenderProcess\V8Exception.cs" />
     <Compile Include="RequestContextExtensions.cs" />
+    <Compile Include="ResponseFilter\StreamResponseFilter.cs" />
     <Compile Include="Structs\TouchEvent.cs" />
     <Compile Include="V8Extension.cs" />
     <Compile Include="CefLibraryHandle.cs" />
@@ -220,23 +229,14 @@
     <Compile Include="IPopupFeatures.cs" />
     <Compile Include="IRequestContext.cs" />
     <Compile Include="IResponseFilter.cs" />
-    <Compile Include="ModelBinding\BindingContext.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="ModelBinding\BindingMemberInfo.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ModelBinding\DefaultBinder.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="ModelBinding\DefaultFieldNameConverter.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="ModelBinding\IMethodInterceptor.cs" />
     <Compile Include="ModelBinding\IBinder.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="ModelBinding\IFieldNameConverter.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ModelBinding\ModelBindingExtensions.cs" />
@@ -320,9 +320,7 @@
     <Compile Include="Web\HtmlString.cs" />
     <Compile Include="Web\JsonString.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Lagacy\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.

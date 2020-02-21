@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using CefSharp.Enums;
 using CefSharp.Internals;
 using CefSharp.Structs;
+using CefSharp.Web;
 using Point = System.Drawing.Point;
 using Size = System.Drawing.Size;
 
@@ -19,7 +20,6 @@ namespace CefSharp.OffScreen
     /// An offscreen instance of Chromium that you can use to take
     /// snapshots or evaluate JavaScript.
     /// </summary>
-    /// <seealso cref="CefSharp.Internals.IRenderWebBrowser" />
     public class ChromiumWebBrowser : IRenderWebBrowser
     {
         /// <summary>
@@ -183,15 +183,13 @@ namespace CefSharp.OffScreen
         /// </summary>
         /// <value>The find handler.</value>
         public IFindHandler FindHandler { get; set; }
-        /// <summary>
-        /// Implement <see cref="IAudioHandler" /> to handle audio events.
-        /// </summary>
-        public IAudioHandler AudioHandler { get; set; }
+
         /// <summary>
         /// Implement <see cref="IAccessibilityHandler" /> to handle events related to accessibility.
         /// </summary>
         /// <value>The accessibility handler.</value>
         public IAccessibilityHandler AccessibilityHandler { get; set; }
+
         /// <summary>
         /// Event handler that will get called when the resource load for a navigation fails or is canceled.
         /// It's important to note this event is fired on a CEF UI thread, which by default is not the same as your application UI
@@ -279,6 +277,13 @@ namespace CefSharp.OffScreen
         public event EventHandler<OnPaintEventArgs> Paint;
 
         /// <summary>
+        /// Used by <see cref="ScreenshotAsync(bool, PopupBlending)"/> as the <see cref="Paint"/>
+        /// event happens before the bitmap buffer is updated. We do this to allow users to mark <see cref="OnPaintEventArgs.Handled"/>
+        /// to true and stop the buffer from being updated.
+        /// </summary>
+        private event EventHandler<OnPaintEventArgs> AfterPaint;
+
+        /// <summary>
         /// Event handler that will get called when the message that originates from CefSharp.PostMessage
         /// </summary>
         public event EventHandler<JavascriptMessageReceivedEventArgs> JavascriptMessageReceived;
@@ -289,6 +294,20 @@ namespace CefSharp.OffScreen
         /// and false in IRenderProcessMessageHandler.OnContextReleased
         /// </summary>
         public bool CanExecuteJavascriptInMainFrame { get; private set; }
+
+        /// <summary>
+        /// Create a new OffScreen Chromium Browser. If you use <see cref="CefSharpSettings.LegacyJavascriptBindingEnabled"/> = true then you must
+        /// set <paramref name="automaticallyCreateBrowser"/> to false and call <see cref="CreateBrowser"/> after the objects are registered.
+        /// </summary>
+        /// <param name="html">html string to be initially loaded in the browser.</param>
+        /// <param name="browserSettings">The browser settings to use. If null, the default settings are used.</param>
+        /// <param name="requestContext">See <see cref="RequestContext" /> for more details. Defaults to null</param>
+        /// <param name="automaticallyCreateBrowser">automatically create the underlying Browser</param>
+        /// <exception cref="System.InvalidOperationException">Cef::Initialize() failed</exception>
+        public ChromiumWebBrowser(HtmlString html, BrowserSettings browserSettings = null,
+            IRequestContext requestContext = null, bool automaticallyCreateBrowser = true) : this(html.ToDataUriString(), browserSettings, requestContext, automaticallyCreateBrowser)
+        {
+        }
 
         /// <summary>
         /// Create a new OffScreen Chromium Browser. If you use <see cref="CefSharpSettings.LegacyJavascriptBindingEnabled"/> = true then you must
@@ -359,6 +378,7 @@ namespace CefSharp.OffScreen
 
             if (disposing)
             {
+                CanExecuteJavascriptInMainFrame = false;
                 IsBrowserInitialized = false;
 
                 // Don't reference event listeners any longer:
@@ -370,6 +390,7 @@ namespace CefSharp.OffScreen
                 LoadError = null;
                 LoadingStateChanged = null;
                 Paint = null;
+                AfterPaint = null;
                 StatusMessage = null;
                 TitleChanged = null;
                 JavascriptMessageReceived = null;
@@ -521,17 +542,26 @@ namespace CefSharp.OffScreen
 
             if (screenshot == null || ignoreExistingScreenshot)
             {
-                EventHandler<OnPaintEventArgs> paint = null; // otherwise we cannot reference ourselves in the anonymous method below
+                EventHandler<OnPaintEventArgs> afterPaint = null; // otherwise we cannot reference ourselves in the anonymous method below
 
-                paint = (sender, e) =>
+                afterPaint = (sender, e) =>
                 {
                     // Chromium has rendered.  Tell the task about it.
-                    Paint -= paint;
+                    AfterPaint -= afterPaint;
 
-                    completionSource.TrySetResultAsync(ScreenshotOrNull(blend));
+                    //If the user handled the Paint event then we'll throw an exception here
+                    //as it's not possible to use ScreenShotAsync as the buffer wasn't updated.
+                    if (e.Handled)
+                    {
+                        completionSource.TrySetException(new InvalidOperationException("OnPaintEventArgs.Handled = true, unable to process request. The buffer has not been updated"));
+                    }
+                    else
+                    {
+                        completionSource.TrySetResultAsync(ScreenshotOrNull(blend));
+                    }
                 };
 
-                Paint += paint;
+                AfterPaint += afterPaint;
             }
             else
             {
@@ -580,6 +610,7 @@ namespace CefSharp.OffScreen
         /// <returns>browser instance or null</returns>
         public IBrowser GetBrowser()
         {
+            this.ThrowExceptionIfDisposed();
             this.ThrowExceptionIfBrowserNotInitialized();
 
             return browser;
@@ -679,10 +710,11 @@ namespace CefSharp.OffScreen
         {
             var handled = false;
 
+            var args = new OnPaintEventArgs(type == PaintElementType.Popup, dirtyRect, buffer, width, height);
+
             var handler = Paint;
             if (handler != null)
             {
-                var args = new OnPaintEventArgs(type == PaintElementType.Popup, dirtyRect, buffer, width, height);
                 handler(this, args);
                 handled = args.Handled;
             }
@@ -690,6 +722,12 @@ namespace CefSharp.OffScreen
             if (!handled)
             {
                 RenderHandler?.OnPaint(type, dirtyRect, buffer, width, height);
+            }
+
+            var afterHandler = AfterPaint;
+            if (afterHandler != null)
+            {
+                afterHandler(this, args);
             }
         }
 

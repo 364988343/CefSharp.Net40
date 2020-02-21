@@ -5,26 +5,29 @@
 using System;
 using System.IO;
 
-namespace CefSharp.Example.Filters
+namespace CefSharp.ResponseFilter
 {
     /// <summary>
-    /// MemoryStreamResponseFilter - copies all data from IResponseFilter.Filter
-    /// to a MemoryStream. This is provided as an example to get you started and has not been
-    /// production tested. If you experience problems you should refer to the CEF documentation
-    /// and ask any questions you have on http://magpcss.org/ceforum/index.php
-    /// Make sure to ask your question in the context of the CEF API (remember that CefSharp is just a wrapper).
-    /// https://magpcss.org/ceforum/apidocs3/projects/(default)/CefResponseFilter.html#Filter(void*,size_t,size_t&,void*,size_t,size_t&)
+    /// StreamResponseFilter - copies all data from IResponseFilter.Filter
+    /// to the provided Stream. The <see cref="Stream"/> must be writable, no data will be copied otherwise.
+    /// The StreamResponseFilter will release it's reference (set to null) to the <see cref="Stream"/> when it's Disposed.
     /// </summary>
-    public class MemoryStreamResponseFilter : IResponseFilter
+    public class StreamResponseFilter : IResponseFilter
     {
-        private MemoryStream memoryStream;
+        private Stream responseStream;
+
+        /// <summary>
+        /// StreamResponseFilter constructor
+        /// </summary>
+        /// <param name="stream">a writable stream</param>
+        public StreamResponseFilter(Stream stream)
+        {
+            responseStream = stream;
+        }
 
         bool IResponseFilter.InitFilter()
         {
-            //NOTE: We could initialize this earlier, just one possible use of InitFilter
-            memoryStream = new MemoryStream();
-
-            return true;
+            return responseStream != null && responseStream.CanWrite;
         }
 
         FilterStatus IResponseFilter.Filter(Stream dataIn, out long dataInRead, Stream dataOut, out long dataOutWritten)
@@ -47,7 +50,7 @@ namespace CefSharp.Example.Filters
             dataOut.Write(readBytes, 0, readBytes.Length);
 
             //Write buffer to the memory stream
-            memoryStream.Write(readBytes, 0, readBytes.Length);
+            responseStream.Write(readBytes, 0, readBytes.Length);
 
             //If we read less than the total amount avaliable then we need
             //return FilterStatus.NeedMoreData so we can then write the rest
@@ -61,13 +64,7 @@ namespace CefSharp.Example.Filters
 
         void IDisposable.Dispose()
         {
-            memoryStream.Dispose();
-            memoryStream = null;
-        }
-
-        public byte[] Data
-        {
-            get { return memoryStream.ToArray(); }
+            responseStream = null;
         }
     }
 }

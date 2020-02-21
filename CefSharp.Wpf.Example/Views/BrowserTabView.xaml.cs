@@ -31,33 +31,11 @@ namespace CefSharp.Wpf.Example.Views
 
             browser.RequestHandler = new ExampleRequestHandler();
 
-            //See https://github.com/cefsharp/CefSharp/issues/2246 for details on the two different binding options
-            if (CefSharpSettings.LegacyJavascriptBindingEnabled)
-            {
-                browser.RegisterJsObject("bound", new BoundObject(), options: BindingOptions.DefaultBinder);
-            }
-            else
-            {
-                //Objects can still be pre registered, they can also be registered when required, see ResolveObject below
-                //browser.JavascriptObjectRepository.Register("bound", new BoundObject(), isAsync:false, options: BindingOptions.DefaultBinder);
-            }
-
             var bindingOptions = new BindingOptions()
             {
                 Binder = BindingOptions.DefaultBinder.Binder,
                 MethodInterceptor = new MethodInterceptorLogger() // intercept .net methods calls from js and log it
             };
-
-            //See https://github.com/cefsharp/CefSharp/issues/2246 for details on the two different binding options
-            if (CefSharpSettings.LegacyJavascriptBindingEnabled)
-            {
-                browser.RegisterAsyncJsObject("boundAsync", new AsyncBoundObject(), options: bindingOptions);
-            }
-            else
-            {
-                //Objects can still be pre registered, they can also be registered when required, see ResolveObject below
-                //browser.JavascriptObjectRepository.Register("boundAsync", new AsyncBoundObject(), isAsync: true, options: bindingOptions);
-            }
 
             //To use the ResolveObject below and bind an object with isAsync:false we must set CefSharpSettings.WcfEnabled = true before
             //the browser is initialized.
@@ -99,7 +77,6 @@ namespace CefSharp.Wpf.Example.Views
             downloadHandler.OnBeforeDownloadFired += OnBeforeDownloadFired;
             downloadHandler.OnDownloadUpdatedFired += OnDownloadUpdatedFired;
             browser.DownloadHandler = downloadHandler;
-            browser.AudioHandler = new AudioHandler();
 
             //Read an embedded bitmap into a memory stream then register it as a resource you can then load custom://cefsharp/images/beach.jpg
             var beachImageStream = new MemoryStream();

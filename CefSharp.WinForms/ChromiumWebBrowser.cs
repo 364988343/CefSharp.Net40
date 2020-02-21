@@ -18,7 +18,6 @@ namespace CefSharp.WinForms
     /// ChromiumWebBrowser is the WinForms web browser control
     /// </summary>
     /// <seealso cref="System.Windows.Forms.Control" />
-    /// <seealso cref="CefSharp.Internals.IWebBrowserInternal" />
     /// <seealso cref="CefSharp.WinForms.IWinFormsWebBrowser" />
     [Docking(DockingBehavior.AutoDock), DefaultEvent("LoadingStateChanged"), ToolboxBitmap(typeof(ChromiumWebBrowser)),
     Description("CefSharp ChromiumWebBrowser - Chromium Embedded Framework .Net wrapper. https://github.com/cefsharp/CefSharp"),
@@ -51,6 +50,12 @@ namespace CefSharp.WinForms
         /// the browser is initialized in an async fashion)
         /// </summary>
         private bool browserCreated;
+        /// <summary>
+        /// A flag indicating if the <see cref="Address"/> was used when calling CreateBrowser
+        /// If false and <see cref="Address"/> contains a non empty string Load will be called
+        /// on the main frame
+        /// </summary>
+        private bool initialAddressLoaded;
         /// <summary>
         /// Browser initialization settings
         /// </summary>
@@ -230,11 +235,6 @@ namespace CefSharp.WinForms
         [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden), DefaultValue(null)]
         public IFindHandler FindHandler { get; set; }
         /// <summary>
-        /// Implement <see cref="IAudioHandler" /> to handle audio events.
-        /// </summary>
-        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden), DefaultValue(null)]
-        public IAudioHandler AudioHandler { get; set; }
-        /// <summary>
         /// The <see cref="IFocusHandler" /> for this ChromiumWebBrowser.
         /// </summary>
         /// <value>The focus handler.</value>
@@ -375,7 +375,7 @@ namespace CefSharp.WinForms
         /// <summary>
         /// ParentFormMessageInterceptor hooks the Form handle and forwards
         /// the move/active messages to the browser, the default is true
-        /// and should only be required when using <see cref="CefSettings.MultiThreadedMessageLoop"/>
+        /// and should only be required when using <see cref="AbstractCefSettings.MultiThreadedMessageLoop"/>
         /// set to true.
         /// </summary>
         [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden), DefaultValue(true)]
@@ -416,10 +416,12 @@ namespace CefSharp.WinForms
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ChromiumWebBrowser"/> class.
+        /// **Important** - When using this constructor the <see cref="Control.Dock"/> property
+        /// will default to <see cref="DockStyle.Fill"/>.
         /// </summary>
         /// <param name="html">html string to be initially loaded in the browser.</param>
-        /// <param name="requestContext">Request context that will be used for this browser instance,
-        /// if null the Global Request Context will be used</param>
+        /// <param name="requestContext">(Optional) Request context that will be used for this browser instance, if null the Global
+        /// Request Context will be used.</param>
         public ChromiumWebBrowser(HtmlString html, IRequestContext requestContext = null) : this(html.ToDataUriString(), requestContext)
         {
 
@@ -427,10 +429,12 @@ namespace CefSharp.WinForms
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ChromiumWebBrowser"/> class.
+        /// **Important** - When using this constructor the <see cref="Control.Dock"/> property
+        /// will default to <see cref="DockStyle.Fill"/>.
         /// </summary>
         /// <param name="address">The address.</param>
-        /// <param name="requestContext">Request context that will be used for this browser instance,
-        /// if null the Global Request Context will be used</param>
+        /// <param name="requestContext">(Optional) Request context that will be used for this browser instance, if null the Global
+        /// Request Context will be used.</param>
         public ChromiumWebBrowser(string address, IRequestContext requestContext = null)
         {
             Dock = DockStyle.Fill;
@@ -512,6 +516,7 @@ namespace CefSharp.WinForms
         {
             if (disposing)
             {
+                CanExecuteJavascriptInMainFrame = false;
                 IsBrowserInitialized = false;
 
                 // Don't maintain a reference to event listeners anylonger:
@@ -617,7 +622,7 @@ namespace CefSharp.WinForms
         /// To re-enable Window Activation then remove WS_EX_NOACTIVATE from ExStyle
         /// <code>
         /// const uint WS_EX_NOACTIVATE = 0x08000000;
-        /// windowInfo.ExStyle &= ~WS_EX_NOACTIVATE;
+        /// windowInfo.ExStyle &amp;= ~WS_EX_NOACTIVATE;
         ///</code>
         /// </example>
         protected virtual IWindowInfo CreateBrowserWindowInfo(IntPtr handle)
@@ -649,6 +654,8 @@ namespace CefSharp.WinForms
                 if (IsBrowserInitialized == false || browser == null)
                 {
                     var windowInfo = CreateBrowserWindowInfo(Handle);
+
+                    initialAddressLoaded = !string.IsNullOrEmpty(Address);
 
                     managedCefBrowserAdapter.CreateBrowser(windowInfo, browserSettings as BrowserSettings, requestContext as RequestContext, Address);
 
@@ -685,6 +692,13 @@ namespace CefSharp.WinForms
             }
 
             ResizeBrowser();
+
+            //If Load was called after the call to CreateBrowser we'll call Load
+            //on the MainFrame
+            if (!initialAddressLoaded && !string.IsNullOrEmpty(Address))
+            {
+                browser.MainFrame.LoadUrl(Address);
+            }
 
             IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty);
         }
@@ -901,9 +915,21 @@ namespace CefSharp.WinForms
         /// <returns>browser instance or null</returns>
         public IBrowser GetBrowser()
         {
+            this.ThrowExceptionIfDisposed();
             this.ThrowExceptionIfBrowserNotInitialized();
 
             return browser;
+        }
+
+        /// <summary>
+        /// Gets the default size of the control.
+        /// </summary>
+        /// <value>
+        /// The default <see cref="T:System.Drawing.Size" /> of the control.
+        /// </value>
+        protected override Size DefaultSize
+        {
+            get { return new Size(200, 100); }
         }
 
         /// <summary>

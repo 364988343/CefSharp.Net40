@@ -6,19 +6,20 @@ using System;
 using System.ComponentModel;
 using System.Windows.Forms;
 using CefSharp.Example.JavascriptBinding;
-using CefSharp.WinForms.Internals;
 
 namespace CefSharp.WinForms.Example.Minimal
 {
     public partial class SimpleBrowserForm : Form
     {
         private ChromiumWebBrowser browser;
+        private IFocusHandler customFocusHandler;
         private bool multiThreadedMessageLoop;
 
-        public SimpleBrowserForm(bool multiThreadedMessageLoop)
+        public SimpleBrowserForm(bool multiThreadedMessageLoop, IFocusHandler customFocusHandler = null)
         {
             InitializeComponent();
 
+            this.customFocusHandler = customFocusHandler;
             this.multiThreadedMessageLoop = multiThreadedMessageLoop;
 
             Text = "CefSharp";
@@ -66,10 +67,16 @@ namespace CefSharp.WinForms.Example.Minimal
             browser.StatusMessage += OnBrowserStatusMessage;
             browser.TitleChanged += OnBrowserTitleChanged;
             browser.AddressChanged += OnBrowserAddressChanged;
-            browser.JavascriptObjectRepository.Register("bound", new BoundObject());
+            browser.JavascriptObjectRepository.Register("bound", new BoundObject(), false);
             if (!multiThreadedMessageLoop)
             {
                 browser.FocusHandler = null;
+            }
+
+            //Only override if we have a custom handler
+            if (customFocusHandler != null)
+            {
+                browser.FocusHandler = customFocusHandler;
             }
 
         }
