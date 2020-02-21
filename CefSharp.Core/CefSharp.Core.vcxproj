@@ -1,6 +1,6 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\cef.sdk.76.1.9\build\cef.sdk.props" Condition="Exists('..\packages\cef.sdk.76.1.9\build\cef.sdk.props')" />
+  <Import Project="..\packages\cef.sdk.79.1.36\build\cef.sdk.props" Condition="Exists('..\packages\cef.sdk.79.1.36\build\cef.sdk.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug-Net40|Win32">
       <Configuration>Debug-Net40</Configuration>
@@ -432,10 +432,10 @@
     <ClCompile Include="Internals\CefExtensionWrapper.cpp" />
     <ClCompile Include="Internals\CefFrameWrapper.cpp" />
     <ClCompile Include="Internals\CefSharpBrowserWrapper.cpp" />
+    <ClCompile Include="Internals\CefUrlRequestClientAdapter.cpp" />
     <ClCompile Include="Internals\CefValueWrapper.cpp" />
     <ClCompile Include="Internals\ClientAdapter.cpp" />
     <ClCompile Include="Internals\CookieVisitor.cpp" />
-    <ClCompile Include="Internals\CefRequestWrapper.cpp" />
     <ClCompile Include="Internals\JavascriptCallbackProxy.cpp" />
     <ClCompile Include="Internals\JavascriptCallbackFactory.cpp" />
     <ClCompile Include="Internals\Serialization\ObjectsSerialization.cpp" />
@@ -446,6 +446,7 @@
     <ClCompile Include="Internals\Serialization\Primitives.cpp" />
     <ClCompile Include="Internals\Serialization\JsObjectsSerialization.cpp" />
     <ClCompile Include="Internals\CefRequestContextHandlerAdapter.cpp" />
+    <ClCompile Include="Request.cpp" />
     <ClCompile Include="RequestContext.cpp" />
     <ClCompile Include="ResourceHandlerWrapper.cpp" />
     <ClCompile Include="Stdafx.cpp">
@@ -458,6 +459,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release-Net40|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="UrlRequest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BrowserSettings.h" />
@@ -471,6 +473,7 @@
     <ClInclude Include="Internals\CefResourceSkipCallbackWrapper.h" />
     <ClInclude Include="Internals\CefRunFileDialogCallbackAdapter.h" />
     <ClInclude Include="Internals\CefSchemeRegistrarWrapper.h" />
+    <ClInclude Include="Internals\CefUrlRequestClientAdapter.h" />
     <ClInclude Include="Internals\CefValueWrapper.h" />
     <ClInclude Include="Internals\CefWriteHandlerWrapper.h" />
     <ClInclude Include="Internals\CefImageWrapper.h" />
@@ -490,8 +493,6 @@
     <ClInclude Include="Internals\CefFrameWrapper.h" />
     <ClInclude Include="Internals\CefMenuModelWrapper.h" />
     <ClInclude Include="Internals\CefPdfPrintCallbackWrapper.h" />
-    <ClInclude Include="Internals\CefPostDataElementWrapper.h" />
-    <ClInclude Include="Internals\CefPostDataWrapper.h" />
     <ClInclude Include="Internals\CefRegisterCdmCallbackAdapter.h" />
     <ClInclude Include="Internals\CefResolveCallbackAdapter.h" />
     <ClInclude Include="Internals\CefResponseFilterAdapter.h" />
@@ -504,13 +505,16 @@
     <ClInclude Include="Internals\CefWrapper.h" />
     <ClInclude Include="PopupFeatures.h" />
     <ClInclude Include="Internals\CefRequestContextHandlerAdapter.h" />
+    <ClInclude Include="PostData.h" />
+    <ClInclude Include="PostDataElement.h" />
+    <ClInclude Include="Request.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="UrlRequest.h" />
     <ClInclude Include="WindowInfo.h" />
     <ClInclude Include="Internals\CefCompletionCallbackAdapter.h" />
     <ClInclude Include="Internals\ClientAdapter.h" />
     <ClInclude Include="Internals\CookieVisitor.h" />
     <ClInclude Include="Internals\CefSharpApp.h" />
-    <ClInclude Include="Internals\CefRequestWrapper.h" />
     <ClInclude Include="Internals\CefJSDialogCallbackWrapper.h" />
     <ClInclude Include="Internals\JavascriptCallbackProxy.h" />
     <ClInclude Include="Internals\JavascriptCallbackFactory.h" />

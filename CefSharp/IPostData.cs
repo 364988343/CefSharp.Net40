@@ -16,7 +16,7 @@ namespace CefSharp
         /// Add the specified <see cref="IPostDataElement"/>.
         /// </summary>
         /// <param name="element">element to be added.</param>
-        /// <returns> Returns true if the add succeeds.</returns>
+        /// <returns>Returns true if the add succeeds.</returns>
         bool AddElement(IPostDataElement element);
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace CefSharp
         /// <summary>
         /// Create a new <see cref="IPostDataElement"/> instance
         /// </summary>
-        /// <returns></returns>
+        /// <returns>PostDataElement</returns>
         IPostDataElement CreatePostDataElement();
 
         /// <summary>

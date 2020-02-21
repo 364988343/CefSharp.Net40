@@ -26,6 +26,12 @@ namespace CefSharp
         public const string DefaultMimeType = "text/html";
 
         /// <summary>
+        /// We reuse a temp buffer where possible for copying the data from the stream
+        /// into the output stream
+        /// </summary>
+        private byte[] tempBuffer;
+
+        /// <summary>
         /// Gets or sets the Charset
         /// </summary>
         public string Charset { get; set; }
@@ -84,7 +90,8 @@ namespace CefSharp
         /// <param name="stream">Optional Stream - must be set at some point to provide a valid response</param>
         /// <param name="autoDisposeStream">When true the Stream will be disposed when this instance is Diposed, you will
         /// be unable to use this ResourceHandler after the Stream has been disposed</param>
-        public ResourceHandler(string mimeType = DefaultMimeType, Stream stream = null, bool autoDisposeStream = false)
+        /// <param name="charset">response charset</param>
+        public ResourceHandler(string mimeType = DefaultMimeType, Stream stream = null, bool autoDisposeStream = false, string charset = null)
         {
             if (string.IsNullOrEmpty(mimeType))
             {
@@ -97,6 +104,7 @@ namespace CefSharp
             Headers = new NameValueCollection();
             Stream = stream;
             AutoDisposeStream = autoDisposeStream;
+            Charset = charset;
         }
 
         bool IResourceHandler.Open(IRequest request, out bool handleRequest, ICallback callback)
@@ -153,9 +161,15 @@ namespace CefSharp
                 return false;
             }
 
-            //Data out represents an underlying buffer (typically 32kb in size).
-            var buffer = new byte[dataOut.Length];
-            bytesRead = Stream.Read(buffer, 0, buffer.Length);
+            //Data out represents an underlying unmanaged buffer (typically 64kb in size).
+            //We reuse a temp buffer where possible
+            if (tempBuffer == null || tempBuffer.Length < dataOut.Length)
+            {
+                tempBuffer = new byte[dataOut.Length];
+            }
+
+            //Only read the number of bytes that can be written to dataOut
+            bytesRead = Stream.Read(tempBuffer, 0, (int)dataOut.Length);
 
             // To indicate response completion set bytesRead to 0 and return false
             if (bytesRead == 0)
@@ -163,7 +177,9 @@ namespace CefSharp
                 return false;
             }
 
-            dataOut.Write(buffer, 0, buffer.Length);
+            //We need to use bytesRead instead of tempbuffer.Length otherwise
+            //garbage from the previous copy would be written to dataOut
+            dataOut.Write(tempBuffer, 0, bytesRead);
 
             return bytesRead > 0;
         }
@@ -187,16 +203,30 @@ namespace CefSharp
             {
                 responseLength = ResponseLength.Value;
             }
-            else if (Stream != null && Stream.CanSeek)
+
+            if (Stream != null && Stream.CanSeek)
             {
-                //If no ResponseLength provided then attempt to infer the length
-                responseLength = Stream.Length;
+                //ResponseLength property has higher precedence over Stream.Length
+                if (ResponseLength == null || responseLength == 0)
+                {
+                    //If no ResponseLength provided then attempt to infer the length
+                    responseLength = Stream.Length;
+                }
+
+                Stream.Position = 0;
             };
         }
 
         void IResourceHandler.Cancel()
         {
-            Stream = null;
+            // Prior to Prior to https://bitbucket.org/chromiumembedded/cef/commits/90301bdb7fd0b32137c221f38e8785b3a8ad8aa4
+            // This method was unexpectedly being called during Read (from a different thread),
+            // changes to the threading model were made and I haven't confirmed if this is still
+            // the case.
+            // 
+            // The documentation for Cancel is vaigue and there aren't any examples that
+            // illustrage it's intended use case so for now we'll just keep things
+            // simple and free our resources in Dispose
         }
 
         bool IResourceHandler.ProcessRequest(IRequest request, ICallback callback)
@@ -248,8 +278,9 @@ namespace CefSharp
         /// </summary>
         /// <param name="data">data</param>
         /// <param name="mimeType">mimeType</param>
+        /// <param name="charSet">response charset</param>
         /// <returns>IResourceHandler</returns>
-        public static IResourceHandler FromByteArray(byte[] data, string mimeType = null)
+        public static IResourceHandler FromByteArray(byte[] data, string mimeType = null, string charSet = null)
         {
             return new ByteArrayResourceHandler(mimeType ?? DefaultMimeType, data);
         }
@@ -307,10 +338,11 @@ namespace CefSharp
         /// <param name="mimeType">Type of MIME.</param>
         /// <param name="autoDisposeStream">Dispose of the stream when finished with (you will only be able to serve one
         /// request).</param>
+        /// <param name="charSet">response charset</param>
         /// <returns>ResourceHandler.</returns>
-        public static ResourceHandler FromStream(Stream stream, string mimeType = DefaultMimeType, bool autoDisposeStream = false)
+        public static ResourceHandler FromStream(Stream stream, string mimeType = DefaultMimeType, bool autoDisposeStream = false, string charSet = null)
         {
-            return new ResourceHandler(mimeType, stream, autoDisposeStream);
+            return new ResourceHandler(mimeType, stream, autoDisposeStream, charSet);
         }
 
         /// <summary>
@@ -931,7 +963,31 @@ namespace CefSharp
             {".xtp", "application/octet-stream"},
             {".xwd", "image/x-xwindowdump"},
             {".z", "application/x-compress"},
-            {".zip", "application/x-zip-compressed"}
+            {".zip", "application/x-zip-compressed"},
+
+            // Recently added entries from 
+            // https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Complete_list_of_MIME_types
+            // https://cs.chromium.org/chromium/src/net/base/mime_util.cc?sq=package:chromium&g=0&l=147
+            {".wasm", "application/wasm"},
+            {".ogg", "audio/ogg"},
+            {".oga", "audio/ogg"},
+            {".ogv", "video/ogg"},
+            {".opus", "audio/opus"},
+            {".webm", "video/webm"},
+            {".weba", "audio/webm"},
+            //https://developers.google.com/speed/webp
+            {".webp", "image/webp"},
+            {".epub", "application/epub+zip"},
+            // We'll map .woff to font/woff as application/font-woff is deprecated
+            // https://tools.ietf.org/html/rfc8081#section-4.4.5
+            // Deprecated Alias:  The existing registration "application/font-woff" is deprecated in favor of "font/woff".
+            {".woff", "font/woff"},
+            // https://www.w3.org/TR/WOFF2/#IMT
+            // https://tools.ietf.org/html/rfc8081#section-4.4.6
+            {".woff2", "font/woff2"},
+            //TODO: Mapping should be updated (exists above)
+            //{".ttf", "font/ttf"},
+            {".otf", "font/otf"}
         };
 
         /// <summary>
@@ -962,8 +1018,10 @@ namespace CefSharp
             if (AutoDisposeStream && Stream != null)
             {
                 Stream.Dispose();
-                Stream = null;
             }
+
+            Stream = null;
+            tempBuffer = null;
         }
     }
 }

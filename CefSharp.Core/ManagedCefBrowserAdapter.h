@@ -26,6 +26,7 @@ using namespace CefSharp::ModelBinding;
 
 namespace CefSharp
 {
+    /// <exclude />
     public ref class ManagedCefBrowserAdapter : public IBrowserAdapter
     {
         MCefRefPtr<ClientAdapter> _clientAdapter;
@@ -72,7 +73,6 @@ namespace CefSharp
             }
 
             _methodRunnerQueue->MethodInvocationComplete += gcnew EventHandler<MethodInvocationCompleteArgs^>(this, &ManagedCefBrowserAdapter::MethodInvocationComplete);
-            _methodRunnerQueue->Start();
         }
 
         !ManagedCefBrowserAdapter()
@@ -88,7 +88,7 @@ namespace CefSharp
             if (_methodRunnerQueue != nullptr)
             {
                 _methodRunnerQueue->MethodInvocationComplete -= gcnew EventHandler<MethodInvocationCompleteArgs^>(this, &ManagedCefBrowserAdapter::MethodInvocationComplete);
-                _methodRunnerQueue->Stop();
+                delete _methodRunnerQueue;
                 _methodRunnerQueue = nullptr;
             }
 
