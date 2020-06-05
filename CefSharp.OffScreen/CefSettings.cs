@@ -8,7 +8,7 @@ namespace CefSharp.OffScreen
     /// Initialization settings. Many of these and other settings can also configured
     /// using command-line switches.
     /// </summary>
-    public class CefSettings : AbstractCefSettings
+    public class CefSettings : CefSettingsBase
     {
         /// <summary>
         /// Intialize with default values
@@ -20,8 +20,6 @@ namespace CefSharp.OffScreen
             //For OffScreen it doesn't make much sense to enable audio by default, so we disable it.
             //this can be removed in user code if required
             CefCommandLineArgs.Add("mute-audio");
-
-            CefCommandLineArgs.Add("disable-gpu-compositing");
         }
 
         /// <summary>
